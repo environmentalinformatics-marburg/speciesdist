@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="J. Kluge, H. Meyer, T. Nauss" />
+
+<meta name="date" content="2015-03-21" />
+
+<title>GBIF Preprocessing</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<link href="data:text/css,body%20%7B%0A%20%20background%2Dcolor%3A%20%23fff%3B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20max%2Dwidth%3A%20700px%3B%0A%20%20overflow%3A%20visible%3B%0A%20%20padding%2Dleft%3A%202em%3B%0A%20%20padding%2Dright%3A%202em%3B%0A%20%20font%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0A%20%20font%2Dsize%3A%2014px%3B%0A%20%20line%2Dheight%3A%201%2E35%3B%0A%7D%0A%0A%23header%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0A%0A%23TOC%20%7B%0A%20%20clear%3A%20both%3B%0A%20%20margin%3A%200%200%2010px%2010px%3B%0A%20%20padding%3A%204px%3B%0A%20%20width%3A%20400px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20border%2Dradius%3A%205px%3B%0A%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20font%2Dsize%3A%2013px%3B%0A%20%20line%2Dheight%3A%201%2E3%3B%0A%7D%0A%20%20%23TOC%20%2Etoctitle%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%20%20font%2Dsize%3A%2015px%3B%0A%20%20%20%20margin%2Dleft%3A%205px%3B%0A%20%20%7D%0A%0A%20%20%23TOC%20ul%20%7B%0A%20%20%20%20padding%2Dleft%3A%2040px%3B%0A%20%20%20%20margin%2Dleft%3A%20%2D1%2E5em%3B%0A%20%20%20%20margin%2Dtop%3A%205px%3B%0A%20%20%20%20margin%2Dbottom%3A%205px%3B%0A%20%20%7D%0A%20%20%23TOC%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dleft%3A%20%2D2em%3B%0A%20%20%7D%0A%20%20%23TOC%20li%20%7B%0A%20%20%20%20line%2Dheight%3A%2016px%3B%0A%20%20%7D%0A%0Atable%20%7B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dcolor%3A%20%23DDDDDD%3B%0A%20%20border%2Dstyle%3A%20outset%3B%0A%20%20border%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0A%20%20border%2Dwidth%3A%202px%3B%0A%20%20padding%3A%205px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%20%20line%2Dheight%3A%2018px%3B%0A%20%20padding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0A%20%20border%2Dleft%2Dstyle%3A%20none%3B%0A%20%20border%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Ap%20%7B%0A%20%20margin%3A%200%2E5em%200%3B%0A%7D%0A%0Ablockquote%20%7B%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20padding%3A%200%2E25em%200%2E75em%3B%0A%7D%0A%0Ahr%20%7B%0A%20%20border%2Dstyle%3A%20solid%3B%0A%20%20border%3A%20none%3B%0A%20%20border%2Dtop%3A%201px%20solid%20%23777%3B%0A%20%20margin%3A%2028px%200%3B%0A%7D%0A%0Adl%20%7B%0A%20%20margin%2Dleft%3A%200%3B%0A%7D%0A%20%20dl%20dd%20%7B%0A%20%20%20%20margin%2Dbottom%3A%2013px%3B%0A%20%20%20%20margin%2Dleft%3A%2013px%3B%0A%20%20%7D%0A%20%20dl%20dt%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%7D%0A%0Aul%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%7D%0A%20%20ul%20li%20%7B%0A%20%20%20%20list%2Dstyle%3A%20circle%20outside%3B%0A%20%20%7D%0A%20%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dbottom%3A%200%3B%0A%20%20%7D%0A%0Apre%2C%20code%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20color%3A%20%23333%3B%0A%7D%0Apre%20%7B%0A%20%20white%2Dspace%3A%20pre%2Dwrap%3B%20%20%20%20%2F%2A%20Wrap%20long%20lines%20%2A%2F%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20margin%3A%205px%200px%2010px%200px%3B%0A%20%20padding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Acode%20%7B%0A%20%20font%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%20%20font%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0A%20%20padding%3A%202px%200px%3B%0A%7D%0A%0Adiv%2Efigure%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0A%20%20background%2Dcolor%3A%20%23FFFFFF%3B%0A%20%20padding%3A%202px%3B%0A%20%20border%3A%201px%20solid%20%23DDDDDD%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20margin%3A%200%205px%3B%0A%7D%0A%0Ah1%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%20%20font%2Dsize%3A%2035px%3B%0A%20%20line%2Dheight%3A%2040px%3B%0A%7D%0A%0Ah2%20%7B%0A%20%20border%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0A%20%20padding%2Dtop%3A%2010px%3B%0A%20%20padding%2Dbottom%3A%202px%3B%0A%20%20font%2Dsize%3A%20145%25%3B%0A%7D%0A%0Ah3%20%7B%0A%20%20border%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0A%20%20padding%2Dtop%3A%2010px%3B%0A%20%20font%2Dsize%3A%20120%25%3B%0A%7D%0A%0Ah4%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0A%20%20margin%2Dleft%3A%208px%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Ah5%2C%20h6%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23ccc%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Aa%20%7B%0A%20%20color%3A%20%230033dd%3B%0A%20%20text%2Ddecoration%3A%20none%3B%0A%7D%0A%20%20a%3Ahover%20%7B%0A%20%20%20%20color%3A%20%236666ff%3B%20%7D%0A%20%20a%3Avisited%20%7B%0A%20%20%20%20color%3A%20%23800080%3B%20%7D%0A%20%20a%3Avisited%3Ahover%20%7B%0A%20%20%20%20color%3A%20%23BB00BB%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%0A%2F%2A%20Class%20described%20in%20https%3A%2F%2Fbenjeffrey%2Ecom%2Fposts%2Fpandoc%2Dsyntax%2Dhighlighting%2Dcss%0A%20%20%20Colours%20from%20https%3A%2F%2Fgist%2Egithub%2Ecom%2Frobsimmons%2F1172277%20%2A%2F%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Keyword%20%2A%2F%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%2F%2A%20DataType%20%2A%2F%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%2F%2A%20DecVal%20%28decimal%20values%29%20%2A%2F%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20BaseN%20%2A%2F%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Float%20%2A%2F%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Char%20%2A%2F%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20String%20%2A%2F%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%2F%2A%20Comment%20%2A%2F%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%2F%2A%20OtherToken%20%2A%2F%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20AlertToken%20%2A%2F%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Function%20calls%20%2A%2F%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%2F%2A%20ErrorTok%20%2A%2F%0A%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div id="header">
+<h1 class="title">GBIF Preprocessing</h1>
+<h4 class="author"><em>J. Kluge, H. Meyer, T. Nauss</em></h4>
+<h4 class="date"><em>2015-03-21</em></h4>
+</div>
+
+
+<div id="reading-gbif-data-dump-for-the-first-time" class="section level2">
+<h2>Reading GBIF data dump for the first time</h2>
+<p>Reading GBIF for the first time (code is not evalueted, but the saved file will be loaded in the end).</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Read GBIF for the first time -------------------------------------------------</span>
+<span class="co"># Split GBIF into chunks and load them into a data.table afterwards.</span>
+<span class="co"># Splitting is done because there was an error once regarding the correct column</span>
+<span class="co"># numbers. Only columns given by relevant_cols will be processed during the </span>
+<span class="co"># final import.</span>
+infile &lt;-<span class="st"> </span><span class="kw">paste0</span>(datapath_gbif, <span class="st">&quot;gbif_PTERIDOPHYTA.txt&quot;</span>)
+  <span class="kw">splitLTF</span>(infile, <span class="dt">sep =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>)
+  
+  infiles &lt;-<span class="st"> </span><span class="kw">list.files</span>(datapath_gbif, <span class="dt">pattern =</span> <span class="kw">glob2rx</span>(<span class="st">&quot;gbif_chunk*.txt&quot;</span>),
+                        <span class="dt">full.names =</span> <span class="ot">TRUE</span>)
+  relevant_cols &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">63</span>, <span class="dv">70</span>, <span class="dv">71</span>, <span class="dv">72</span>, <span class="dv">78</span>, <span class="dv">79</span>, <span class="dv">93</span>, <span class="dv">100</span>, <span class="dv">157</span>, <span class="dv">164</span>, <span class="dv">173</span>, <span class="dv">182</span>, 
+                     <span class="dv">210</span>, <span class="dv">213</span>, <span class="dv">214</span>, <span class="dv">215</span>, <span class="dv">216</span>, <span class="dv">217</span>, <span class="dv">218</span>, <span class="dv">219</span>, <span class="dv">220</span>)
+  gbif &lt;-<span class="st"> </span><span class="kw">readLTF</span>(infiles, <span class="dt">sep =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>, <span class="dt">rlvt_cols =</span> relevant_cols)  
+  
+  for(i in <span class="kw">seq</span>(<span class="dv">40</span>)){
+    <span class="kw">print</span>(<span class="kw">dim</span>(gbif[[i]]))
+  }
+  
+  gbif &lt;-<span class="st"> </span>gbif[-<span class="dv">1</span>,]
+  <span class="kw">save</span>(gbif, <span class="dt">file =</span> <span class="kw">paste0</span>(datapath_rdata, <span class="st">&quot;gibf_01_initial_input.Rdata&quot;</span>))</code></pre>
+<p>As it turns out, everything worked fine and the <code>gibf_01_initial_input.Rdata</code> dataset will be used from now on.</p>
+</div>
+<div id="clean-gbif-data-dump" class="section level2">
+<h2>Clean GBIF data dump</h2>
+<p>First check how many cells have been empty in the original data set.</p>
+<pre class="sourceCode r"><code class="sourceCode r">cell_empty &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">names</span>(gbif), function(x){
+  gbif[, <span class="kw">length</span>(<span class="kw">which</span>(gbif[[x]] ==<span class="st"> &quot;cempty&quot;</span>))]
+  })
+cell_empty</code></pre>
+<pre><code>##           gbifID    basisOfRecord        continent      countryCode 
+##                0                0          2644985           486725 
+##           county  decimalLatitude decimalLongitude           family 
+##          2913744          1215748          1215748            14898 
+##            genus            order           phylum   scientificName 
+##            37592            23826                0                0 
+##        taxonRank         taxonKey         classKey         orderKey 
+##                0                0            23353            23826 
+##        familyKey         genusKey      subgenusKey       speciesKey 
+##            14898            37592          3967748           188512 
+##          species      genericName 
+##           188512                0</code></pre>
+<p>Let’s check, how many cells have been NA values (or interpreted as such.</p>
+<pre class="sourceCode r"><code class="sourceCode r">cell_na &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">names</span>(gbif), function(x){
+  gbif[, <span class="kw">length</span>(<span class="kw">which</span>(<span class="kw">is.na</span>(gbif[[x]])))]
+  })
+cell_na</code></pre>
+<pre><code>##           gbifID    basisOfRecord        continent      countryCode 
+##                0                0                0             1007 
+##           county  decimalLatitude decimalLongitude           family 
+##                0                0                0                0 
+##            genus            order           phylum   scientificName 
+##                0                0                0                0 
+##        taxonRank         taxonKey         classKey         orderKey 
+##                0                0                0                0 
+##        familyKey         genusKey      subgenusKey       speciesKey 
+##                0                0                0                0 
+##          species      genericName 
+##                0                0</code></pre>
+<p>Time for a closer look on these NA’s in column <code>countryCode</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">gbif[<span class="kw">which</span>(<span class="kw">is.na</span>(countryCode)), <span class="dv">1</span>:<span class="dv">7</span>, with =<span class="st"> </span><span class="ot">FALSE</span>]</code></pre>
+<pre><code>##          gbifID      basisOfRecord continent countryCode county
+##    1: 912448228 PRESERVED_SPECIMEN    cempty          NA cempty
+##    2: 912448232 PRESERVED_SPECIMEN    cempty          NA cempty
+##    3: 912448234 PRESERVED_SPECIMEN    cempty          NA cempty
+##    4: 912448238 PRESERVED_SPECIMEN    cempty          NA cempty
+##    5: 912448248 PRESERVED_SPECIMEN    cempty          NA cempty
+##   ---                                                          
+## 1003:  62161208            UNKNOWN    cempty          NA cempty
+## 1004:  62161210            UNKNOWN    cempty          NA cempty
+## 1005: 317868157 PRESERVED_SPECIMEN    cempty          NA cempty
+## 1006: 874777636 PRESERVED_SPECIMEN    cempty          NA cempty
+## 1007: 367057554            UNKNOWN    cempty          NA cempty
+##       decimalLatitude decimalLongitude
+##    1:          -18.05            13.95
+##    2:          -21.05            18.52
+##    3:          -22.58            17.08
+##    4:          -17.25             13.2
+##    5:          -19.23            17.72
+##   ---                                 
+## 1003:          cempty           cempty
+## 1004:          cempty           cempty
+## 1005:          cempty           cempty
+## 1006:          cempty           cempty
+## 1007:          cempty           cempty</code></pre>
+<p>In total, 1007 rows have already NA values. We come back to that later but at this point we can be sure that e.g. <code>gbifID</code> 318859294 will not be interpreted as e.g. Namibia for any country code conversion we will apply later.</p>
+<p>Let’s convert “cempty” (i.e the initially empty cells) to NA.</p>
+<pre class="sourceCode r"><code class="sourceCode r">for (i in <span class="kw">seq_len</span>(<span class="kw">ncol</span>(gbif))){
+  <span class="kw">set</span>(gbif, <span class="dt">i =</span> <span class="kw">which</span>(gbif[[i]]==<span class="st"> &quot;cempty&quot;</span>), <span class="dt">j =</span> i, <span class="dt">value =</span> <span class="ot">NA</span>)
+  }
+cell_na &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">names</span>(gbif), function(x){
+  gbif[, <span class="kw">length</span>(<span class="kw">which</span>(<span class="kw">is.na</span>(gbif[[x]])))]
+  })
+cell_na</code></pre>
+<pre><code>##           gbifID    basisOfRecord        continent      countryCode 
+##                0                0          2644985           487732 
+##           county  decimalLatitude decimalLongitude           family 
+##          2913744          1215748          1215748            14898 
+##            genus            order           phylum   scientificName 
+##            37592            23826                0                0 
+##        taxonRank         taxonKey         classKey         orderKey 
+##                0                0            23353            23826 
+##        familyKey         genusKey      subgenusKey       speciesKey 
+##            14898            37592          3967748           188512 
+##          species      genericName 
+##           188512                0</code></pre>
+<p>Worked. Only column <code>countryCode</code> has a differing value between the cells which used to be “cempty” and the ones which are now NA but the difference matches the 1007 rows which had alread NA’s in this column.</p>
+<p>Let’s finish the initial cleaning by converting the columns to their individual class. At the moment, all columns are of class <code>character</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(gbif)</code></pre>
+<pre><code>##      gbifID basisOfRecord continent countryCode county decimalLatitude
+## 1: 99791734   OBSERVATION        NA          NZ     NA       -43.73838
+## 2: 99791735   OBSERVATION        NA          NZ     NA       -37.75211
+## 3: 99791736   OBSERVATION        NA          NZ     NA       -43.65741
+## 4: 99791737   OBSERVATION        NA          NZ     NA       -43.47946
+## 5: 99791738   OBSERVATION        NA          NZ     NA       -35.40201
+## 6: 99791739   OBSERVATION        NA          NZ     NA       -40.65764
+##    decimalLongitude      family   genus      order       phylum
+## 1:        169.71806 Cyatheaceae Cyathea Cyatheales Pteridophyta
+## 2:        175.88513 Cyatheaceae Cyathea Cyatheales Pteridophyta
+## 3:        169.36339 Cyatheaceae Cyathea Cyatheales Pteridophyta
+## 4:         170.0297 Cyatheaceae Cyathea Cyatheales Pteridophyta
+## 5:        174.24661 Cyatheaceae Cyathea Cyatheales Pteridophyta
+## 6:        175.40286 Cyatheaceae Cyathea Cyatheales Pteridophyta
+##                  scientificName taxonRank taxonKey classKey orderKey
+## 1: Cyathea cunninghamii Hook.f.   SPECIES  3598820  7228684  7229402
+## 2: Cyathea cunninghamii Hook.f.   SPECIES  3598820  7228684  7229402
+## 3: Cyathea cunninghamii Hook.f.   SPECIES  3598820  7228684  7229402
+## 4: Cyathea cunninghamii Hook.f.   SPECIES  3598820  7228684  7229402
+## 5: Cyathea cunninghamii Hook.f.   SPECIES  3598820  7228684  7229402
+## 6: Cyathea cunninghamii Hook.f.   SPECIES  3598820  7228684  7229402
+##    familyKey genusKey subgenusKey speciesKey              species
+## 1:      6624  2650273          NA    3598820 Cyathea cunninghamii
+## 2:      6624  2650273          NA    3598820 Cyathea cunninghamii
+## 3:      6624  2650273          NA    3598820 Cyathea cunninghamii
+## 4:      6624  2650273          NA    3598820 Cyathea cunninghamii
+## 5:      6624  2650273          NA    3598820 Cyathea cunninghamii
+## 6:      6624  2650273          NA    3598820 Cyathea cunninghamii
+##    genericName
+## 1:     Cyathea
+## 2:     Cyathea
+## 3:     Cyathea
+## 4:     Cyathea
+## 5:     Cyathea
+## 6:     Cyathea</code></pre>
+<p>Columns <code>gbifID</code>, <code>decimalLatitude</code> and <code>decimalLongitude</code> can be converted to numeric:</p>
+<pre class="sourceCode r"><code class="sourceCode r">for(i in <span class="kw">c</span>(<span class="st">&quot;gbifID&quot;</span>, <span class="st">&quot;decimalLatitude&quot;</span>, <span class="st">&quot;decimalLongitude&quot;</span>)){
+  <span class="kw">set</span>(gbif, <span class="dt">j =</span> i, <span class="dt">value =</span> <span class="kw">as.numeric</span>(gbif[[i]]))
+  }
+<span class="kw">summary</span>(gbif[, <span class="kw">c</span>(<span class="st">&quot;gbifID&quot;</span>, <span class="st">&quot;decimalLatitude&quot;</span>, <span class="st">&quot;decimalLongitude&quot;</span>), 
+             <span class="dt">with =</span> <span class="ot">FALSE</span>])</code></pre>
+<pre><code>##      gbifID          decimalLatitude   decimalLongitude 
+##  Min.   :1.216e+05   Min.   :-85.0     Min.   :-180.0   
+##  1st Qu.:2.371e+08   1st Qu.:  0.0     1st Qu.:  -3.4   
+##  Median :4.387e+08   Median : 42.4     Median :   6.5   
+##  Mean   :5.291e+08   Mean   : 25.2     Mean   :  31.9   
+##  3rd Qu.:8.622e+08   3rd Qu.: 53.0     3rd Qu.: 116.7   
+##  Max.   :1.062e+09   Max.   : 85.5     Max.   : 180.0   
+##                      NA's   :1215748   NA's   :1215748</code></pre>
+<p>All done. Let’s store the current state of the dataset so we can come back if something happens in the next section.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">save</span>(gbif, <span class="dt">file =</span> <span class="kw">paste0</span>(datapath_rdata, <span class="st">&quot;gibf_02_cleaned_input.Rdata&quot;</span>))</code></pre>
+</div>
+<div id="create-geographical-subset-of-gbif-data-dump" class="section level2">
+<h2>Create “geographical” subset of GBIF data dump</h2>
+<p>For the upcoming analysis, only those data lines are relevant which have at least either latitude and longitude information or a country code or county information. Let’s get an overview of that stuff:</p>
+<pre class="sourceCode r"><code class="sourceCode r">total &lt;-<span class="st"> </span><span class="kw">nrow</span>(gbif)
+
+either &lt;-<span class="st"> </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(!<span class="kw">is.na</span>(countryCode) |<span class="st"> </span>!<span class="kw">is.na</span>(decimalLatitude) |
+<span class="st">                              </span>!<span class="kw">is.na</span>(county)))]
+
+ctry_only &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(!<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span><span class="kw">is.na</span>(decimalLatitude) &amp;<span class="st"> </span>
+<span class="st">                        </span><span class="kw">is.na</span>(county)))]
+  
+coord_only &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span>!<span class="kw">is.na</span>(decimalLatitude) &amp;<span class="st"> </span>
+<span class="st">                        </span><span class="kw">is.na</span>(county)))]
+
+cnty_only &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span><span class="kw">is.na</span>(decimalLatitude) &amp;<span class="st"> </span>
+<span class="st">                        </span>!<span class="kw">is.na</span>(county)))]
+
+ctry_and_coord &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(!<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span>!<span class="kw">is.na</span>(decimalLatitude)))]
+
+cnty_and_coord &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span>!<span class="kw">is.na</span>(decimalLatitude) &amp;<span class="st"> </span>
+<span class="st">                        </span>!<span class="kw">is.na</span>(county)))]
+
+ctry_and_cnty &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(!<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span><span class="kw">is.na</span>(decimalLatitude) &amp;<span class="st"> </span>
+<span class="st">                        </span>!<span class="kw">is.na</span>(county)))]
+
+no_geoinfo &lt;-<span class="st"> </span>
+<span class="st">  </span>gbif[, <span class="kw">length</span>(<span class="kw">which</span>(<span class="kw">is.na</span>(countryCode) &amp;<span class="st"> </span><span class="kw">is.na</span>(decimalLatitude) &amp;
+<span class="st">                        </span><span class="kw">is.na</span>(county)))]</code></pre>
+<pre><code>## [1] &quot;Total number of data lines:               3967748&quot;</code></pre>
+<pre><code>## [1] &quot;Country and/or county and/or coordinates: 3517692&quot;</code></pre>
+<pre><code>## [1] &quot;Country only:                             487576&quot;</code></pre>
+<pre><code>## [1] &quot;Coordinates only:                         4541&quot;</code></pre>
+<pre><code>## [1] &quot;County only:                              32473&quot;</code></pre>
+<pre><code>## [1] &quot;Country and coordinates:                  2746797&quot;</code></pre>
+<pre><code>## [1] &quot;Only county and coordinates:              662&quot;</code></pre>
+<pre><code>## [1] &quot;Only country and county:                  245643&quot;</code></pre>
+<pre><code>## [1] &quot;No information:                           450056&quot;</code></pre>
+<p>These figures are not bad. Overall, at least one minimum geographic information is available for 3517692 of the 3967748 lines available in the GBIF data dump which is equal to 89%.</p>
+<p>For 2752000 (69%), geographical coordinates are availabe. Almost all of these observations (i.e. 2747459 which equals all except 4541) have an additional information on either the country or county, so that cross-validation between these two kinds of information is possible.</p>
+<p>This reminds us with a total of 765692 ( 0.19%) which can only be assigned on a county or country level (aside from the 11% which can not be geocoded at all).</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

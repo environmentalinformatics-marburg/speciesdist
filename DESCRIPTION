@@ -1,0 +1,15 @@
+Package: speciesdist
+Type: Package
+Title: Species distribution analysis
+Version: 0.0.0.9034
+Date: 2015-03-21
+Author: Jürge Kluge, Hanna Meyer, Thomas Nauss
+Maintainer: Environmental Informatics
+    <admin@environmentalinformatics-marburg.de>
+Description: Methods for analysing species distributions on a global scale
+License: GPL-3
+LazyData: true
+Suggests:
+    knitr,
+    data.table
+VignetteBuilder: knitr

@@ -1,0 +1,178 @@
+---
+title: "GBIF Preprocessing"
+author: "J. Kluge, H. Meyer, T. Nauss"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{GBIF Preprocessing}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, echo=FALSE}
+library(data.table)
+
+inpath <- "D:/active/juergen/"
+datapath <- paste0(inpath, "data/")
+datapath_gbif <- paste0(datapath, "gbif/")
+datapath_rdata <- paste0(datapath, "rdata/")
+
+load(paste0(datapath_rdata, "gibf_01_initial_input.Rdata"))
+```
+
+
+## Reading GBIF data dump for the first time
+Reading GBIF for the first time (code is not evalueted, but the saved file
+will be loaded in the end).
+```{r, eval=FALSE}
+# Read GBIF for the first time -------------------------------------------------
+# Split GBIF into chunks and load them into a data.table afterwards.
+# Splitting is done because there was an error once regarding the correct column
+# numbers. Only columns given by relevant_cols will be processed during the 
+# final import.
+infile <- paste0(datapath_gbif, "gbif_PTERIDOPHYTA.txt")
+  splitLTF(infile, sep = "\t")
+  
+  infiles <- list.files(datapath_gbif, pattern = glob2rx("gbif_chunk*.txt"),
+                        full.names = TRUE)
+  relevant_cols <- c(1, 63, 70, 71, 72, 78, 79, 93, 100, 157, 164, 173, 182, 
+                     210, 213, 214, 215, 216, 217, 218, 219, 220)
+  gbif <- readLTF(infiles, sep = "\t", rlvt_cols = relevant_cols)  
+  
+  for(i in seq(40)){
+    print(dim(gbif[[i]]))
+  }
+  
+  gbif <- gbif[-1,]
+  save(gbif, file = paste0(datapath_rdata, "gibf_01_initial_input.Rdata"))
+```
+As it turns out, everything worked fine and the `gibf_01_initial_input.Rdata` 
+dataset will be used from now on.
+
+
+## Clean GBIF data dump
+First check how many cells have been empty in the original data set.
+```{r}
+cell_empty <- sapply(names(gbif), function(x){
+  gbif[, length(which(gbif[[x]] == "cempty"))]
+  })
+cell_empty
+```
+
+Let's check, how many cells have been NA values (or interpreted as such.
+```{r}
+cell_na <- sapply(names(gbif), function(x){
+  gbif[, length(which(is.na(gbif[[x]])))]
+  })
+cell_na
+```
+
+Time for a closer look on these NA's in column `countryCode`.
+```{r}
+gbif[which(is.na(countryCode)), 1:7, with = FALSE]
+```
+In total, 1007 rows have already NA values. We come back to that later but at
+this point we can be sure that e.g. `gbifID` 318859294 will not be interpreted
+as e.g. Namibia for any country code conversion we will apply later.
+
+Let's convert "cempty" (i.e the initially empty cells) to NA.
+```{r}
+for (i in seq_len(ncol(gbif))){
+  set(gbif, i = which(gbif[[i]]== "cempty"), j = i, value = NA)
+  }
+cell_na <- sapply(names(gbif), function(x){
+  gbif[, length(which(is.na(gbif[[x]])))]
+  })
+cell_na
+```
+Worked. Only column `countryCode` has a differing value between the cells which
+used to be "cempty" and the ones which are now NA but the difference matches
+the 1007 rows which had alread NA's in this column.
+
+Let's finish the initial cleaning by converting the columns to their individual
+class. At the moment, all columns are of class `character`.
+```{r}
+head(gbif)
+```
+
+Columns `gbifID`, `decimalLatitude` and `decimalLongitude` can be converted to 
+numeric:
+```{r}
+for(i in c("gbifID", "decimalLatitude", "decimalLongitude")){
+  set(gbif, j = i, value = as.numeric(gbif[[i]]))
+  }
+summary(gbif[, c("gbifID", "decimalLatitude", "decimalLongitude"), 
+             with = FALSE])
+```
+
+All done. Let's store the current state of the dataset so we can come back if 
+something happens in the next section.
+```{r, eval=FALSE}
+save(gbif, file = paste0(datapath_rdata, "gibf_02_cleaned_input.Rdata"))
+```
+
+
+## Create "geographical" subset of GBIF data dump
+For the upcoming analysis, only those data lines are relevant which have at 
+least either latitude and longitude information or a country code or county
+information. Let's get an overview of that stuff:
+```{r}
+total <- nrow(gbif)
+
+either <- gbif[, length(which(!is.na(countryCode) | !is.na(decimalLatitude) |
+                              !is.na(county)))]
+
+ctry_only <- 
+  gbif[, length(which(!is.na(countryCode) & is.na(decimalLatitude) & 
+                        is.na(county)))]
+  
+coord_only <- 
+  gbif[, length(which(is.na(countryCode) & !is.na(decimalLatitude) & 
+                        is.na(county)))]
+
+cnty_only <- 
+  gbif[, length(which(is.na(countryCode) & is.na(decimalLatitude) & 
+                        !is.na(county)))]
+
+ctry_and_coord <- 
+  gbif[, length(which(!is.na(countryCode) & !is.na(decimalLatitude)))]
+
+cnty_and_coord <- 
+  gbif[, length(which(is.na(countryCode) & !is.na(decimalLatitude) & 
+                        !is.na(county)))]
+
+ctry_and_cnty <- 
+  gbif[, length(which(!is.na(countryCode) & is.na(decimalLatitude) & 
+                        !is.na(county)))]
+
+no_geoinfo <- 
+  gbif[, length(which(is.na(countryCode) & is.na(decimalLatitude) &
+                        is.na(county)))]
+```
+```{r, echo=FALSE}
+paste0("Total number of data lines:               ", total)
+paste0("Country and/or county and/or coordinates: ", either)
+paste0("Country only:                             ", ctry_only)
+paste0("Coordinates only:                         ", coord_only)
+paste0("County only:                              ", cnty_only)
+paste0("Country and coordinates:                  ", ctry_and_coord)
+paste0("Only county and coordinates:              ", cnty_and_coord)
+paste0("Only country and county:                  ", ctry_and_cnty)
+paste0("No information:                           ", no_geoinfo)
+```
+These figures are not bad. Overall, at least one minimum geographic information
+is available for `r either` of the `r total` lines available in the GBIF data
+dump which is equal to `r round(either/total,2)*100`%.
+
+For `r gbif[, length(which(!is.na(decimalLatitude)))]` 
+(`r round(gbif[, length(which(!is.na(decimalLatitude)))]/total,2)*100`%), 
+geographical coordinates are availabe. Almost all of these observations 
+(i.e. `r ctry_and_coord + cnty_and_coord` which equals all except `r coord_only`)
+have an additional information on either the country or county, so that 
+cross-validation between these two kinds of information is possible.
+
+This reminds us with a total of `r ctry_only+cnty_only+ctry_and_cnty` (
+`r round((ctry_only+cnty_only+ctry_and_cnty)/total,2)`%) which can only be 
+assigned on a county or country level (aside from the 
+`r round(no_geoinfo/total,2)*100`% which can not be geocoded at all). 
+
