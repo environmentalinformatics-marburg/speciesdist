@@ -1,0 +1,110 @@
+---
+title: "GBIF Geocodation"
+author: "J. Kluge, H. Meyer, T. Nauss"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{GBIF Geolocation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, echo=FALSE}
+library(data.table)
+
+inpath <- "D:/active/juergen/"
+datapath <- paste0(inpath, "data/")
+datapath_gbif <- paste0(datapath, "gbif/")
+datapath_rdata <- paste0(datapath, "rdata/")
+datapath_geo <- paste0(datapath, "geo/")
+
+load(paste0(datapath_rdata, "gibf_02_cleaned_input.Rdata"))
+ctry_and_coord <- 
+  gbif[, length(which(!is.na(countryCode) & !is.na(decimalLatitude)))]
+cnty_and_coord <- 
+  gbif[, length(which(is.na(countryCode) & !is.na(decimalLatitude) & 
+                        !is.na(county)))]
+```
+
+
+# Check GBIF coordinate information for plausibility
+Since actual geolocation is quite relevant for the upcoming analysis, a cross
+check of geographical coordinates and country/county information will be 
+performed for the 'r ctry_and_coord + cnty_and_coord' datasets which have both 
+information.
+```{r}
+cntr <- rgdal::readOGR(paste0(datapath_geo, "world_boundaries.shp"), 
+                       layer = "world_boundaries")
+
+```
+
+
+
+
+## Geocode GBIF by country code information
+After checking the coordinates for plausibility, missing coordinates will be
+assigned by country code or county name. The data source for country information
+is <http://www.gadm.org/version2>.
+
+First, get the country centroids from the country data layer of GDAM2:
+```{r}
+test <- rgdal::readOGR(paste0(datapath_geo, "test.shp"), 
+                       layer = "test")
+
+
+
+
+cntr <- rgdal::readOGR(paste0(datapath_geo, "world_boundaries.shp"), 
+                       layer = "world_boundaries")
+cntr_cent <- calcPolygonCentroids(cntr)
+```
+
+Second, get the county centroids from the country data layer of GDAM2:
+```{r}
+county <- rgdal::readOGR(paste0(datapath_geo, "world_boundaries.shp"), 
+                       layer = "world_boundaries")
+county_cent <- calcPolygonCentroids(county)
+```
+
+
+## Vignette Info
+
+Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

@@ -17,6 +17,6 @@ readLTF <- function(infile, sep=",", header=TRUE, rlvt_cols=NULL){
     print(x)
     fread(x, sep = sep, header = header, select=rlvt_cols)
   })
-  return(input)
   input <- do.call("rbind", input)  
+  return(input)
 }

@@ -105,12 +105,6 @@ summary(gbif[, c("gbifID", "decimalLatitude", "decimalLongitude"),
              with = FALSE])
 ```
 
-All done. Let's store the current state of the dataset so we can come back if 
-something happens in the next section.
-```{r, eval=FALSE}
-save(gbif, file = paste0(datapath_rdata, "gibf_02_cleaned_input.Rdata"))
-```
-
 
 ## Create "geographical" subset of GBIF data dump
 For the upcoming analysis, only those data lines are relevant which have at 
@@ -176,3 +170,16 @@ This reminds us with a total of `r ctry_only+cnty_only+ctry_and_cnty` (
 assigned on a county or country level (aside from the 
 `r round(no_geoinfo/total,2)*100`% which can not be geocoded at all). 
 
+To finally get a first cleanded version of the GBIF data dump, the lines with
+absolutely no information will be removed from the dataset (i.e. the rest will
+be kept).
+```{r}
+gbif <- gbif[which(!is.na(countryCode) | !is.na(decimalLatitude) |
+                       !is.na(county))]
+```
+
+All done. Let's store the current state of the dataset so we can come back if 
+something happens in the next section.
+```{r, eval=FALSE}
+save(gbif, file = paste0(datapath_rdata, "gibf_02_cleaned_input.Rdata"))
+```

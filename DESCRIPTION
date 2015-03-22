@@ -1,7 +1,7 @@
 Package: speciesdist
 Type: Package
 Title: Species distribution analysis
-Version: 0.0.0.9034
+Version: 0.0.0.9035
 Date: 2015-03-21
 Author: Jürge Kluge, Hanna Meyer, Thomas Nauss
 Maintainer: Environmental Informatics
@@ -9,7 +9,13 @@ Maintainer: Environmental Informatics
 Description: Methods for analysing species distributions on a global scale
 License: GPL-3
 LazyData: true
-Suggests:
+Suggests: 
+    data.table,
+    geosphere, 
     knitr,
-    data.table
+    raster,
+    rgdal,
+    rgeos,
+    sp,
+    testthat
 VignetteBuilder: knitr
